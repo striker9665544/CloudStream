@@ -1,0 +1,80 @@
+package com.cloudflix.backend.entity;
+
+import jakarta.persistence.*;
+import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
+import java.util.List;
+
+@Entity
+@Table(name = "subscription_plans")
+@NoArgsConstructor
+public class SubscriptionPlan {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id; // Changed to Long to match your schema
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal price;
+
+    @Column(nullable = false, length = 3)
+    private String currency = "USD";
+
+    @Column(nullable = false)
+    private Integer durationDays;
+
+    @Lob // For potentially longer text
+    private String description;
+    
+    
+    public BigDecimal getPrice() { // Common getter name for the token type
+        return price;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public List<String> getRoles() {
+        return roles;
+    }
+
+    // --- Setter Methods ---
+    // Note: Setters might not be needed for all fields in a response DTO,
+    // as it's often immutable after creation. However, they are provided below
+    // as requested for all fields.
+
+    public void setAccessToken(BigDecimal token) { // Setter name matching getter
+        this.token = token;
+    }
+
+    public void setTokenType(String type) { // Setter name matching getter
+        this.type = type;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
+    }
+}

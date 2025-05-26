@@ -1,0 +1,5 @@
+package com.cloudflix.backend.repository;
+
+public class RoleRepository {
+
+}

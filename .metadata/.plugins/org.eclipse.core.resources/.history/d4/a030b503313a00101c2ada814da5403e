@@ -1,0 +1,28 @@
+package com.cloudflix.backend.config;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.util.List;
+
+@Configuration
+public class WebMvcConfig implements WebMvcConfigurer {
+
+    @Override
+    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+        // Add Jackson2 message converter as the first one
+        // This ensures it's prioritized for application/json
+        converters.add(0, new MappingJackson2HttpMessageConverter());
+    }
+
+    // You can also use extendMessageConverters if you just want to add
+    // without worrying about the order as much initially, though configureMessageConverters
+    // gives more control.
+    // @Override
+    // public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
+    //     converters.removeIf(converter -> !(converter instanceof MappingJackson2HttpMessageConverter));
+    //     converters.add(new MappingJackson2HttpMessageConverter());
+    // }
+}

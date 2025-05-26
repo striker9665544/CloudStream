@@ -1,0 +1,21 @@
+package com.cloudflix.backend.dto.response;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
+public class MessageResponse {
+    private String message;
+    
+    
+    @Data
+    @AllArgsConstructor // This annotation should generate the constructor
+    public class MessageResponse {
+        private String message;
+    }
+    
+    public MessageResponse(String message) {
+        this.message = message;
+    }
+}

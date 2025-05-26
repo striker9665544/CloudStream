@@ -1,0 +1,32 @@
+package com.yourdomain.cloudflixbackend;
+
+import com.yourdomain.cloudflixbackend.entity.ERole;
+import com.yourdomain.cloudflixbackend.entity.Role;
+import com.yourdomain.cloudflixbackend.repository.RoleRepository;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+
+@SpringBootApplication
+public class CloudflixBackendApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(CloudflixBackendApplication.class, args);
+    }
+
+    // This bean will run once the application context is loaded.
+    @Bean
+    CommandLineRunner initRoles(RoleRepository roleRepository) {
+        return args -> {
+            if (roleRepository.findByName(ERole.ROLE_USER).isEmpty()) {
+                roleRepository.save(new Role(ERole.ROLE_USER));
+                System.out.println("ROLE_USER initialized.");
+            }
+            if (roleRepository.findByName(ERole.ROLE_ADMIN).isEmpty()) {
+                roleRepository.save(new Role(ERole.ROLE_ADMIN));
+                System.out.println("ROLE_ADMIN initialized.");
+            }
+        };
+    }
+}

@@ -1,0 +1,19 @@
+package com.cloudflix.backend.entity;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name = "roles")
+@Data // This should generate public ERole getName() and public void setName(ERole name)
+@NoArgsConstructor
+public class Role {
+    // ... id field ...
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20, unique = true)
+    private ERole name; // Field is 'name' of type ERole
+
+    // ... constructor ...
+}

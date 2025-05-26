@@ -1,0 +1,5 @@
+package com.cloudflix.backend.security.services;
+
+public class UserDetailsImpl {
+
+}

@@ -1,0 +1,5 @@
+package com.cloudflix.backend.config;
+
+public class MappingJackson2HttpMessageConverter {
+
+}

@@ -1,0 +1,27 @@
+# Server Configuration
+server.port=8080
+
+# Database Configuration (PostgreSQL example - adjust for your DB)
+spring.datasource.url=jdbc:postgresql://localhost:5432/cloudflix_db # Create this DB
+spring.datasource.username=your_postgres_user
+spring.datasource.password=your_postgres_password
+spring.jpa.hibernate.ddl-auto=update # For dev: creates/updates schema. Use 'validate' or 'none' in prod.
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.show-sql=true
+# For debugging
+
+# JWT Configuration
+jwt.secret=YourSuperSecretKeyForJWTsWhichIsAtLeast256BitsLongAndVerySecureDontUseThisOneInProd
+jwt.expiration.ms=86400000
+# 24 hours in milliseconds
+
+# Spring Security (Optional: default login page disabled)
+spring.security.user.name=user
+# Default basic auth user if no other security is set
+spring.security.user.password=password
+# Not recommended for prod
+# We will disable basic auth once JWT is fully set up
+
+# CORS Configuration (will be refined in SecurityConfig)
+# For now, this helps with local frontend development
+# server.servlet.context-path=/api # Optional: Prefix all backend APIs with /api

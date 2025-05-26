@@ -1,0 +1,31 @@
+package com.cloudflix.backend.entity;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
+
+@Entity
+@Table(name = "subscription_plans")
+@Data
+@NoArgsConstructor
+public class SubscriptionPlan {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id; // Changed to Long to match your schema
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal price;
+
+    @Column(nullable = false, length = 3)
+    private String currency = "USD";
+
+    @Column(nullable = false)
+    private Integer durationDays;
+
+    @Lob // For potentially longer text
+    private String description;
+}

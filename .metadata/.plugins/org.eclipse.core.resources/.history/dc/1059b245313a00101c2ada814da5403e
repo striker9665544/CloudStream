@@ -1,0 +1,10 @@
+package com.cloudflix.backend.controller;
+
+//In a new TestMsgController.java or even AuthController for a quick test
+@RestController
+public class TestMsgController { // Or add to AuthController temporarily
+ @GetMapping(value = "/api/test-msg", produces = MediaType.APPLICATION_JSON_VALUE)
+ public ResponseEntity<MessageResponse> testMessage() {
+     return ResponseEntity.ok(new MessageResponse("Test successful"));
+ }
+}
