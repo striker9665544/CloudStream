@@ -32,10 +32,27 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         try {
             String jwt = jwtUtils.parseJwt(request);
+            // ---- START DETAILED LOGGING ----
+            if (request.getRequestURI().contains("/api/videos")) { // Only log verbosely for relevant requests
+                logger.info("AuthTokenFilter (/api/videos): JWT from request: {}", jwt);
+            }
+            // ---- END DETAILED LOGGING ----
+            
             if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
                 String email = jwtUtils.getEmailFromJwtToken(jwt);
+                // ---- START DETAILED LOGGING ----
+                if (request.getRequestURI().contains("/api/videos")) {
+                     logger.info("AuthTokenFilter (/api/videos): Email from JWT: {}", email);
+                }
+                // ---- END DETAILED LOGGING ----
 
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                // ---- START DETAILED LOGGING ----
+                if (request.getRequestURI().contains("/api/videos")) {
+                    logger.info("AuthTokenFilter (/api/videos): UserDetails loaded: {}", userDetails.getUsername());
+                    logger.info("AuthTokenFilter (/api/videos): User Authorities from UserDetails: {}", userDetails.getAuthorities());
+                }
+                // ---- END DETAILED LOGGING ----
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetails,
                                                                 null,
@@ -43,9 +60,21 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                // ---- START DETAILED LOGGING ----
+                if (request.getRequestURI().contains("/api/videos")) {
+                    logger.info("AuthTokenFilter (/api/videos): Authentication set in SecurityContext for user: {}. Authorities in Context: {}", email, SecurityContextHolder.getContext().getAuthentication().getAuthorities());
+                }
+                // ---- END DETAILED LOGGING ----
+            } else {
+                if (jwt == null && request.getRequestURI().contains("/api/videos")) {
+                    logger.warn("AuthTokenFilter (/api/videos): JWT is null for request to {}", request.getRequestURI());
+                } else if (jwt != null && request.getRequestURI().contains("/api/videos")) {
+                    logger.warn("AuthTokenFilter (/api/videos): JWT validation failed for token: {}", jwt);
+                }
             }
         } catch (Exception e) {
             logger.error("Cannot set user authentication: {}", e);
+            logger.error("AuthTokenFilter: Cannot set user authentication", e);
         }
         filterChain.doFilter(request, response);
     }

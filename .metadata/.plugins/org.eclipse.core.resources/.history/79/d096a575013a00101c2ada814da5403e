@@ -1,5 +1,0 @@
-package com.cloudflix.backend.dto.request;
-
-public class SignUpRequest {
-
-}

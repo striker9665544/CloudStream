@@ -61,18 +61,20 @@ public class WebSecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable()) // Disable CSRF as we use JWT
-            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Apply CORS configuration
+        http.csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth ->
-                auth.requestMatchers("/api/auth/**").permitAll() // Auth endpoints
-                    .requestMatchers("/api/test/**").permitAll() // Example public test endpoints
+                auth.requestMatchers("/api/auth/**").permitAll()
+                    .requestMatchers("/api/test/**").permitAll()
                     .requestMatchers("/api/test-msg").permitAll()
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                    .requestMatchers("/api/payments/**").authenticated()// In filterChain method, authorizeHttpRequests block.
-                    // Add other public endpoints here (e.g., video listings if public)
-                    .anyRequest().authenticated() // All other requests require authentication
+                    .requestMatchers("/api/payments/**").authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/videos/**").permitAll()
+                    //.requestMatchers(HttpMethod.GET, "/api/videos/genres").permitAll()
+                    .requestMatchers("/api/test/**").permitAll()
+                    .anyRequest().authenticated()
             );
 
         http.authenticationProvider(authenticationProvider());
@@ -84,7 +86,7 @@ public class WebSecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:3001")); // Add your frontend URL
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:3001"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type", "X-Requested-With", "Accept"));
         configuration.setAllowCredentials(true); // Important for cookies/auth headers

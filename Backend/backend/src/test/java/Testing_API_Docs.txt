@@ -1,0 +1,134 @@
+Test Cases:
+For each request below, set the "Authorization" tab to "Bearer Token" and use {{adminToken}} or {{userToken}} as appropriate, or no auth for public endpoints. Set "Content-Type" header to "application/json" for POST/PUT/PATCH requests.
+
+1. Create Video Metadata (Admin/Uploader Role)
+Method: POST
+URL: {{baseURL}}/videos
+Authorization: Bearer Token {{adminToken}} (or a dedicated uploader token if you implement that role)
+Body (raw, JSON):
+json { "title": "My First Awesome Movie", "description": "A thrilling adventure through code and clouds.", "durationSeconds": 7200, "genre": "Action", "thumbnailUrl": "http://example.com/thumbnails/movie1.jpg", "tags": ["adventure", "tech", "cloud"] }
+Expected Response:
+Status: 201 Created
+Body: JSON object representing the created VideoResponse, including an id, the placeholder storageObjectKey, status "PENDING_PROCESSING", and the uploader info. Note the id for subsequent tests.
+
+
+2. Get All Available Videos (Public/User)
+Method: GET
+URL: {{baseURL}}/videos?page=0&size=5&sort=title,asc
+Authorization: None (if public) or Bearer Token {{userToken}}
+Expected Response:
+Status: 200 OK
+Body: Paginated list of VideoResponse objects (initially might be empty or contain only videos you manually set to "AVAILABLE").
+Check pagination fields (totalPages, totalElements, size, number).
+
+
+3. Update Video Status to AVAILABLE (Admin Role - to make it visible in public listings)
+Method: PATCH
+URL: {{baseURL}}/videos/{videoId}/status?status=AVAILABLE (replace {videoId} with the ID from step 1)
+Authorization: Bearer Token {{adminToken}}
+Expected Response:
+Status: 200 OK
+Body: Updated VideoResponse with status: "AVAILABLE" and processedTimestamp set.
+
+
+4. Get Available Video by ID (Public/User)
+Method: GET
+URL: {{baseURL}}/videos/{videoId} (use the ID from step 1)
+Authorization: None or Bearer Token {{userToken}}
+Expected Response:
+Status: 200 OK
+Body: VideoResponse for the specified video.
+Verify viewCount (should be 1 if this is the first direct fetch after it became available and you implemented increment on GET).
+
+
+5. Attempt to Get Video by ID that is NOT "AVAILABLE" (e.g., PENDING)
+Create another video (like step 1), keep its status "PENDING_PROCESSING". Get its ID.
+Method: GET
+URL: {{baseURL}}/videos/{pendingVideoId}
+Expected Response:
+Status: 404 Not Found (because getAvailableVideoById only fetches "AVAILABLE" ones).
+
+
+6. Update Video Metadata (Admin/Owner)
+Method: PUT
+URL: {{baseURL}}/videos/{videoId} (use the ID from step 1)
+Authorization: Bearer Token {{adminToken}} (or the token of the user who uploaded it, if you want to test ownership SpEL).
+Body (raw, JSON):
+json { "title": "My First Awesome Movie (Updated Edition)", "description": "An even more thrilling adventure!", "durationSeconds": 7250, "genre": "Sci-Fi", "thumbnailUrl": "http://example.com/thumbnails/movie1_v2.jpg", "tags": ["sci-fi", "tech", "epic"] }
+Expected Response:
+Status: 200 OK
+Body: Updated VideoResponse. Verify the changes.
+
+
+7. Get Available Videos by Genre (Public/User)
+Method: GET
+URL: {{baseURL}}/videos/genre/Sci-Fi (or "Action" if you didn't update genre)
+Authorization: None or Bearer Token {{userToken}}
+Expected Response:
+Status: 200 OK
+Body: Paginated list of videos matching the genre.
+
+
+8. Get Available Videos by Tag (Public/User)
+Method: GET
+URL: {{baseURL}}/videos/tag/tech
+Authorization: None or Bearer Token {{userToken}}
+Expected Response:
+Status: 200 OK
+Body: Paginated list of videos matching the tag.
+
+
+9. Get Distinct Available Genres (Public/User)
+* Method: GET
+* URL: {{baseURL}}/videos/genres
+* Authorization: None or Bearer Token {{userToken}}
+* Expected Response:
+* Status: 200 OK
+* Body: A JSON array of unique genre strings (e.g., ["Action", "Sci-Fi"]).
+
+
+10. Search Available Videos by Title (Public/User)
+* Method: GET
+* URL: {{baseURL}}/videos/search?title=Awesome Movie
+* Authorization: None or Bearer Token {{userToken}}
+* Expected Response:
+* Status: 200 OK
+* Body: Paginated list of videos whose titles contain "Awesome Movie".
+
+
+11. Record View (Manually - Optional Test)
+* Method: POST
+* URL: {{baseURL}}/videos/{videoId}/view
+* Authorization: None or Bearer Token {{userToken}} (depends on how you secured it; often public or user)
+* Body: Empty
+* Expected Response:
+* Status: 200 OK
+* (Verify in DB or by fetching video again that view count incremented).
+
+
+12. Delete Video (Admin/Owner)
+* Method: DELETE
+* URL: {{baseURL}}/videos/{videoId}
+* Authorization: Bearer Token {{adminToken}} (or owner's token)
+* Expected Response:
+* Status: 200 OK
+* Body: {"message": "Video deleted successfully."}
+* Verification: Try fetching the video again (GET /videos/{videoId}); it should result in a 404 Not Found.
+
+
+13. Test Authorization Failures:
+* Try calling an admin-only endpoint (e.g., Create, Update Status, Delete) with a regular {{userToken}} or no token.
+* Expected Response: 403 Forbidden (if authenticated but wrong role) or 401 Unauthorized (if no token).
+* If you implemented ownership checks for update/delete, try updating/deleting a video with a different user's token (who is not an admin).
+* Expected Response: 403 Forbidden.
+
+
+eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJsb2tlc2hAZXhhbXBsZS5jb20iLCJpYXQiOjE3NDgzMzExMTIsImV4cCI6MTc0ODQxNzUxMn0.13xPru2kMNQeY9jtgS72Gn_lYid8JEi2jMrVI7_6XxECireoAvggiKk0DLgTANKPPL2RRCQ--ZBag5NbDFlmjQ
+
+
+
+Prioritization for Enhancements:
+Video Row Horizontal Scrolling: This will likely have the biggest impact on the "Netflix feel."
+Banner Image & Info: Make the banner more visually appealing and informative.
+Skeleton Loaders: Improve perceived performance.
+"See All" Links: Enhance navigation.

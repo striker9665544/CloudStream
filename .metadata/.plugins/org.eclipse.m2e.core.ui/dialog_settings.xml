@@ -2,6 +2,7 @@
 <section name="Workbench">
 	<section name="MavenProjectImportWizardPage">
 		<list key="rootDirectory">
+			<item value="C:\Users\OMKAR\Desktop\DevOps_Project\Netflix_Generic_Multicloud\Backend\backend"/>
 			<item value="C:\Users\OMKAR\Desktop\DevOps_Project\Netflix_Generic_Multicloud\backend"/>
 		</list>
 		<list key="projectNameTemplate">

@@ -1,5 +1,0 @@
-package com.cloudflix.backend.dto.response;
-
-public class MassageResponse {
-
-}
