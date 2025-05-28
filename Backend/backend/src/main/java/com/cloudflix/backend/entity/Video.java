@@ -1,4 +1,4 @@
-// src/main/java/com/cloudflix/backend/entity/Video.java
+//src/main/java/com/cloudflix/backend/entity/Video.java
 package com.cloudflix.backend.entity;
 
 import jakarta.persistence.*;

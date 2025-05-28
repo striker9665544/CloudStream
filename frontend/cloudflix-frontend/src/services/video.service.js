@@ -2,6 +2,7 @@
 import apiClient from './api'; // Your configured Axios instance
 
 const API_VIDEO_URL = "/videos"; // Relative to baseURL in apiClient
+const API_UPLOAD_URL = "/upload"; // Added for clarity for upload endpoints
 
 // Fetch all available videos (paginated)
 const getAllAvailableVideos = (page = 0, size = 20, sort = 'uploadTimestamp,desc') => {
@@ -13,8 +14,6 @@ const getAllAvailableVideos = (page = 0, size = 20, sort = 'uploadTimestamp,desc
 // Fetch a specific video by its ID
 const getVideoById = (videoId) => {
   return apiClient.get(`${API_VIDEO_URL}/${videoId}`);
-  // Note: The backend already increments view count on this call.
-  // If you wanted to separate view recording, you'd call recordView separately.
 };
 
 // Fetch videos by genre (paginated)
@@ -43,22 +42,32 @@ const searchVideosByTitle = (title, page = 0, size = 20) => {
   });
 };
 
-// --- Admin/Uploader specific functions (if needed from frontend later) ---
-// const createVideoMetadata = (videoData) => {
-//   return apiClient.post(API_VIDEO_URL, videoData);
-// };
+/**
+ * Uploads a video file along with its metadata.
+ * @param {File} videoFile - The video file to upload.
+ * @param {object} metadata - An object containing video metadata (title, description, etc.).
+ * @param {function} [onUploadProgress] - Optional callback for upload progress.
+ * @returns {Promise<AxiosResponse<any>>}
+ */
+const uploadVideoWithMetadata = (videoFile, metadata, onUploadProgress) => {
+  const formData = new FormData();
+  formData.append('videoFile', videoFile, videoFile.name); // Added filename for the file part, good practice
 
-// const updateVideoMetadata = (videoId, videoData) => {
-//   return apiClient.put(`${API_VIDEO_URL}/${videoId}`, videoData);
-// };
+  // === MODIFICATION ===
+  // Send metadata as a plain JSON string.
+  // The browser will likely send this part with Content-Type: text/plain.
+  // Spring MVC's @RequestPart can often handle this by using a
+  // StringHttpMessageConverter first, then Jackson to parse the string into the DTO.
+  formData.append('metadata', JSON.stringify(metadata));
+  // === END MODIFICATION ===
 
-// const updateVideoStatus = (videoId, status) => {
-//   return apiClient.patch(`${API_VIDEO_URL}/${videoId}/status`, null, { params: { status } });
-// };
-
-// const deleteVideo = (videoId) => {
-//   return apiClient.delete(`${API_VIDEO_URL}/${videoId}`);
-// };
+  return apiClient.post(`${API_UPLOAD_URL}/video`, formData, {
+    // Axios will automatically set the overall Content-Type to multipart/form-data
+    // when FormData is used as the body.
+    // No need to set overall 'Content-Type' in headers here.
+    onUploadProgress: onUploadProgress
+  });
+};
 
 const VideoService = {
   getAllAvailableVideos,
@@ -67,10 +76,7 @@ const VideoService = {
   getVideosByTag,
   getDistinctGenres,
   searchVideosByTitle,
-  // createVideoMetadata, // Uncomment if/when admin panel is built
-  // updateVideoMetadata,
-  // updateVideoStatus,
-  // deleteVideo,
+  uploadVideoWithMetadata,
 };
 
 export default VideoService;

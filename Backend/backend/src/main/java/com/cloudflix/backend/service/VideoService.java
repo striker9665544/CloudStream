@@ -1,4 +1,4 @@
-// src/main/java/com/cloudflix/backend/service/VideoService.java
+//src/main/java/com/cloudflix/backend/service/VideoService.java
 package com.cloudflix.backend.service;
 
 import com.cloudflix.backend.dto.request.VideoMetadataRequest;
@@ -45,6 +45,9 @@ public class VideoService {
 
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private FileStorageService fileStorageService;
 
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     //          ADD THIS FIELD FOR VIDEO STORAGE LOCATION
@@ -167,6 +170,9 @@ public class VideoService {
     public void deleteVideo(Long videoId) {
         Video video = videoRepository.findById(videoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Video", "id", videoId));
+        if (video.getStorageObjectKey() != null && !video.getStorageObjectKey().isEmpty()) {
+            fileStorageService.deleteFile(video.getStorageObjectKey());
+        } 
         videoRepository.delete(video);
     }
 

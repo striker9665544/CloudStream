@@ -1,3 +1,4 @@
+--src/main/resources/cloudflix_db.sql
 -- Users Table
 CREATE TABLE users (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,

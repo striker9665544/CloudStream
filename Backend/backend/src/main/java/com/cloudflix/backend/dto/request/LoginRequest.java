@@ -1,3 +1,4 @@
+//src/main/java/com/cloudflix/backend/dto/request/LoginRequest.java
 package com.cloudflix.backend.dto.request;
 
 import jakarta.validation.constraints.Email;

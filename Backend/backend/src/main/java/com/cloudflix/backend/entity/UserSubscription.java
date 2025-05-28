@@ -1,3 +1,4 @@
+//src/main/java/com/cloudflix/backend/entity/UserSubscription.java
 package com.cloudflix.backend.entity;
 
 import jakarta.persistence.*;

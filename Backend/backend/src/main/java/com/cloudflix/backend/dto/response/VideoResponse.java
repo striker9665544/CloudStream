@@ -1,4 +1,4 @@
-// src/main/java/com/cloudflix/backend/dto/response/VideoResponse.java
+//src/main/java/com/cloudflix/backend/dto/response/VideoResponse.java
 package com.cloudflix.backend.dto.response;
 
 import lombok.AllArgsConstructor;

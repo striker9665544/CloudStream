@@ -1,3 +1,4 @@
+//src/main/java/com/cloudflix/backend/config/WebSecurityConfig.java
 package com.cloudflix.backend.config;
 
 import com.cloudflix.backend.security.jwt.AuthEntryPointJwt;

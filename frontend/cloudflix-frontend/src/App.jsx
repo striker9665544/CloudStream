@@ -20,6 +20,8 @@ import HomePage from './pages/HomePage';
 import PaymentPage from './pages/PaymentPage';
 import GenrePage from './pages/GenrePage'; // You added this
 import PlayerPage from './pages/PlayerPage';
+import WatchHistoryPage from './pages/WatchHistoryPage';
+import UploadVideoPage from './pages/admin/UploadVideoPage';
 
 function App() {
   return (
@@ -35,6 +37,8 @@ function App() {
             <Route path="/subscribe" element={<PaymentPage />} />
             <Route path="/genre/:genreSlug" element={<GenrePage />} />
             <Route path="/player/:videoId" element={<PlayerPage />} />
+            <Route path="/history" element={<WatchHistoryPage />} />
+            <Route path="/admin/upload-video" element={<UploadVideoPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/landing" replace />} />

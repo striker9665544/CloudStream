@@ -123,12 +123,252 @@ Body: Paginated list of videos matching the tag.
 * Expected Response: 403 Forbidden.
 
 
-eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJsb2tlc2hAZXhhbXBsZS5jb20iLCJpYXQiOjE3NDgzMzExMTIsImV4cCI6MTc0ODQxNzUxMn0.13xPru2kMNQeY9jtgS72Gn_lYid8JEi2jMrVI7_6XxECireoAvggiKk0DLgTANKPPL2RRCQ--ZBag5NbDFlmjQ
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+1. Record Initial Watch Progress for Video 1
+
+Description: Simulates a user starting to watch video with ID 1 and pausing at 30 seconds.
+Method: PUT
+URL: {{baseURL}}/history/video/1
+Authorization: Bearer Token {{userTokenLokesh}}
+Body (raw, JSON):
+json 
+{ 
+	"resumePositionSeconds": 30, 
+	"completed": false 
+}
+
+Expected Response:
+Status: 200 OK
+Body: JSON WatchHistoryResponse object, e.g.:
+{
+    "watchHistoryId": 1, // Or whatever the new ID is
+    "video": {
+        "id": 1,
+        "title": "My First Awesome Movie (Updated Edition)", // Or actual title
+        "thumbnailUrl": "jsi30.jpg", // Or actual thumbnail
+        "durationSeconds": 7250,
+        "genre": "Sci-Fi"
+    },
+    "watchedAt": "2025-05-28T10:15:30.123456", // Current timestamp
+    "resumePositionSeconds": 30,
+    "completed": false
+}
+Use code with caution.
+Json
+Database Check (Optional): Verify a new row in the watch_history table for user_id (of Lokesh) and video_id=1, with resume_position_seconds=30.
 
 
+2. Update Watch Progress for Video 1
+Description: User continues watching video 1 and pauses at 120 seconds.
+Method: PUT
+URL: {{baseURL}}/history/video/1
+Authorization: Bearer Token {{userTokenLokesh}}
+Body (raw, JSON):
+json 
+{ 
+	"resumePositionSeconds": 120, 
+	"completed": false 
+}
 
-Prioritization for Enhancements:
-Video Row Horizontal Scrolling: This will likely have the biggest impact on the "Netflix feel."
-Banner Image & Info: Make the banner more visually appealing and informative.
-Skeleton Loaders: Improve perceived performance.
-"See All" Links: Enhance navigation.
+Expected Response:
+Status: 200 OK
+Body: Updated WatchHistoryResponse for the same watchHistoryId as in step 1, but with resumePositionSeconds: 120 and an updated watchedAt.
+Database Check (Optional): Verify the existing row for user_id (Lokesh) and video_id=1 is updated.
+
+
+3. Record Initial Watch Progress for Video 2
+Description: User starts watching video with ID 2 and pauses at 60 seconds.
+Method: PUT
+URL: {{baseURL}}/history/video/2
+Authorization: Bearer Token {{userTokenLokesh}}
+Body (raw, JSON):
+json 
+{ 
+	"resumePositionSeconds": 60, 
+	"completed": false 
+}
+
+Expected Response:
+Status: 200 OK
+Body: WatchHistoryResponse for video 2. Note the new watchHistoryId.
+
+
+4. Get User's Watch History (Paginated)
+Description: Retrieve all watch history for the current user.
+Method: GET
+URL: {{baseURL}}/history/user?page=0&size=10&sort=watchedAt,desc
+Authorization: Bearer Token {{userTokenLokesh}}
+
+Expected Response:
+Status: 200 OK
+Body: A paginated response. The content array should contain WatchHistoryResponse objects. Video 1 (updated) should appear before Video 2 because its watchedAt was updated more recently.
+{
+    "content": [
+        {
+            "watchHistoryId": 1, // Assuming ID for Video 1's history
+            "video": { "id": 1, "title": "My First Awesome Movie (Updated Edition)", ... },
+            "watchedAt": "...", // More recent
+            "resumePositionSeconds": 120,
+            "completed": false
+        },
+        {
+            "watchHistoryId": 2, // Assuming ID for Video 2's history
+            "video": { "id": 2, "title": "Sci-Fi Adventure 1", ... },
+            "watchedAt": "...", // Earlier
+            "resumePositionSeconds": 60,
+            "completed": false
+        }
+    ],
+    "pageable": { ... },
+    "totalPages": 1,
+    "totalElements": 2,
+    // ... other pagination fields
+}
+Use code with caution.
+Json
+
+
+5. Get Watch Progress for a Specific Video (Video 1)
+Description: Get the resume time for video 1 for the current user.
+Method: GET
+URL: {{baseURL}}/history/video/1/progress
+Authorization: Bearer Token {{userTokenLokesh}}
+
+Expected Response:
+Status: 200 OK
+Body: WatchHistoryResponse for video 1, showing resumePositionSeconds: 120.
+
+
+6. Get Watch Progress for a Video Not Yet Watched (e.g., Video 3, assuming it exists but no history)
+Description: Test behavior for a video with no history for this user.
+Method: GET
+URL: {{baseURL}}/history/video/3/progress (Assuming video ID 3 exists in videos table)
+Authorization: Bearer Token {{userTokenLokesh}}
+
+Expected Response:
+Status: 404 Not Found
+Body: null or an empty body (as per your controller logic orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null))).
+
+
+7. Mark Video 2 as Completed (Optional Endpoint Test)
+Description: Test marking a video as fully watched.
+Method: POST
+URL: {{baseURL}}/history/video/2/complete
+Authorization: Bearer Token {{userTokenLokesh}}
+Body: (Empty, or you could allow a body if your markVideoAsCompleted service method accepted a request DTO)
+
+Expected Response:
+Status: 200 OK
+Body: WatchHistoryResponse for video 2, with completed: true and resumePositionSeconds potentially set to the video's duration (if duration exists and your service logic does this).
+Verification: Call GET /history/video/2/progress again to confirm the changes.
+
+
+8. Delete a Specific Watch History Entry (Optional Endpoint Test)
+Description: Test deleting the watch history entry for video 2.
+Method: DELETE
+URL: {{baseURL}}/history/2 (Assuming watchHistoryId for video 2's entry is 2. Get this ID from previous responses like step 4 or 7).
+Authorization: Bearer Token {{userTokenLokesh}}
+
+Expected Response:
+Status: 200 OK
+Body: {"message": "Watch history entry deleted successfully."}
+Verification:
+Call GET /history/video/2/progress; it should now be 404 Not Found.
+Call GET /history/user; the entry for video 2 should be gone.
+
+
+9. Attempt to Delete Watch History Entry of Another User (Security Test - if you have another user)
+* Sign in as User A, record history for video X. Note the watchHistoryId.
+* Sign in as User B.
+* Attempt DELETE {{baseURL}}/history/{watchHistoryIdOfUserA} using User B's token.
+
+* Expected Response: 403 Forbidden (due to ownership check in WatchHistoryService.deleteWatchHistoryEntry).
+
+
+10. Clear All User Watch History (Optional Endpoint Test)
+* Description: Test clearing all history for the current user.
+* Method: DELETE
+* URL: {{baseURL}}/history/user/clear
+* Authorization: Bearer Token {{userTokenLokesh}}
+
+* Expected Response:
+* Status: 200 OK
+* Body: {"message": "Watch history cleared successfully."}
+* Verification: Call GET /history/user; the content array should be empty, totalElements should be 0.
+
+
+11. Test Validation for recordOrUpdateProgress
+* Method: PUT
+* URL: {{baseURL}}/history/video/1
+* Authorization: Bearer Token {{userTokenLokesh}}
+* Body (raw, JSON - invalid data):
+json 
+{ 
+	// "resumePositionSeconds": null, 
+	// Test with null "resumePositionSeconds": -10, 
+	// Test with negative "completed": null 
+	// Test with null 
+}
+
+* Expected Response:
+* Status: 400 Bad Request with validation error messages (e.g., "Resume position cannot be null.", "Resume position cannot be negative.").
+
+12. Test Unauthenticated Access
+* Try any of the authenticated endpoints (e.g., GET /history/user) with "No Auth" or an invalid/expired token.
+
+* Expected Response: 401 Unauthorized.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Test this new /api/upload/video endpoint using Postman. This is a bit more complex because it's a multipart/form-data request:
+Method: POST
+URL: {{baseURL}}/upload/video
+Authorization: Bearer Token for an ADMIN/UPLOADER user.
+Body Tab: Select "form-data".
+
+Add two keys:
+
+Key 1:
+KEY: videoFile
+Change the type from "Text" to "File" (dropdown next to the key input).
+VALUE: Click "Select Files" and choose a sample MP4 video file from your computer.
+
+Key 2:
+KEY: metadata
+Keep type as "Text".
+VALUE: Paste a JSON string representing VideoMetadataRequest, e.g.:
+{
+    "title": "My Uploaded Test Video",
+    "description": "Testing the upload functionality.",
+    "genre": "Test",
+    "durationSeconds": 120,
+    "thumbnailUrl": "http://example.com/thumb.jpg",
+    "tags": ["test", "upload"]
+}
+Use code with caution.
+Json
+Content-Type for this part: Postman might try to send this as plain text. You need to tell it it's JSON. Click the three dots (...) next to the metadata key row, select "Edit," and in the "Content-Type" field that appears, type application/json. (Some Postman versions handle this more automatically if the value looks like JSON).
+Send the request.
+
+Expected:
+201 Created response with the VideoResponse DTO.
+The video file should appear in your your_project_root/uploads/videos/ directory with a unique filename.
+A new record in your videos table with the metadata and the storageObjectKey matching the saved filename.
+The console logs from FileStorageService and VideoService should show the process.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+To Test This Frontend Page:
+Ensure your backend is running with the /api/upload/video endpoint.
+Log in to your frontend application as a user with ROLE_ADMIN (or ROLE_UPLOADER if your @PreAuthorize on the backend uses that and the user has it).
+Navigate to /admin/upload-video in your browser.
+Try uploading a video file and filling in the metadata.
+Observe the upload progress, success/error messages.
+Check your backend:
+The video file should be saved in your_project_root/uploads/videos/.
+A new metadata record should be in the videos table in your database.
+The new video should eventually appear on your HomePage (after its status is set to "AVAILABLE", which you might need to do manually in the DB or via a Postman PATCH request for now, as there's no admin UI yet to change status).
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+

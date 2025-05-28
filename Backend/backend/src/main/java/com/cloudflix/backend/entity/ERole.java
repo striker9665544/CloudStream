@@ -1,3 +1,4 @@
+//src/main/java/com/cloudflix/backend/entity/ERole.java
 package com.cloudflix.backend.entity;
 
 public enum ERole {

@@ -6,9 +6,9 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080
 
 const instance = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  //headers: {
+  //  "Content-Type": "application/json",
+  //},
 });
 
 instance.interceptors.request.use(
@@ -16,6 +16,11 @@ instance.interceptors.request.use(
     const user = AuthService.getCurrentUser();
     if (user && user.accessToken) { // Check for accessToken
       config.headers["Authorization"] = 'Bearer ' + user.accessToken;
+    }
+    if (!(config.data instanceof FormData)) {
+      if (!config.headers['Content-Type']) { 
+         config.headers['Content-Type'] = 'application/json';
+      }
     }
     return config;
   },
