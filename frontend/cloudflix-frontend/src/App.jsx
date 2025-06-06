@@ -22,6 +22,9 @@ import GenrePage from './pages/GenrePage'; // You added this
 import PlayerPage from './pages/PlayerPage';
 import WatchHistoryPage from './pages/WatchHistoryPage';
 import UploadVideoPage from './pages/admin/UploadVideoPage';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import AdminManageVideosPage from './pages/admin/AdminManageVideosPage';
+import AdminManageUsersPage from './pages/admin/AdminManageUsersPage';
 
 function App() {
   return (
@@ -33,12 +36,18 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
 
           <Route element={<ProtectedRoute />}>
+            {/* User-facing routes */}
             <Route path="/" element={<HomePage />} />
             <Route path="/subscribe" element={<PaymentPage />} />
             <Route path="/genre/:genreSlug" element={<GenrePage />} />
             <Route path="/player/:videoId" element={<PlayerPage />} />
             <Route path="/history" element={<WatchHistoryPage />} />
-            <Route path="/admin/upload-video" element={<UploadVideoPage />} />
+            
+            {/* Admin-facing routes */}
+            <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+            <Route path="/admin/upload-video" element={<UploadVideoPage />} /> {/* KEEP ONLY ONE */}
+            <Route path="/admin/manage-videos" element={<AdminManageVideosPage />} />
+            {<Route path="/admin/manage-users" element={<AdminManageUsersPage />} />  }
           </Route>
 
           <Route path="*" element={<Navigate to="/landing" replace />} />

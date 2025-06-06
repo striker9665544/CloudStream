@@ -73,8 +73,10 @@ public class WebSecurityConfig {
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     .requestMatchers("/api/payments/**").authenticated()
                     .requestMatchers(HttpMethod.GET, "/api/videos/**").permitAll()
-                    //.requestMatchers(HttpMethod.GET, "/api/videos/genres").permitAll()
-                    .requestMatchers("/api/test/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/videos/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/videos/{videoId}/comments").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/comments/{commentId}/replies").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/videos/{videoId}/ratings/summary").permitAll()
                     .anyRequest().authenticated()
             );
 

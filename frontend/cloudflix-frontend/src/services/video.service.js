@@ -1,6 +1,7 @@
 // src/services/video.service.js
 import apiClient from './api'; // Your configured Axios instance
 
+const API_ADMIN_VIDEO_URL = "/admin/videos";
 const API_VIDEO_URL = "/videos"; // Relative to baseURL in apiClient
 const API_UPLOAD_URL = "/upload"; // Added for clarity for upload endpoints
 
@@ -42,6 +43,44 @@ const searchVideosByTitle = (title, page = 0, size = 20) => {
   });
 };
 
+// --- NEW Admin Specific Functions (DEFINED BEFORE VideoService OBJECT) ---
+const adminGetAllVideos = (page = 0, size = 10, sort = 'uploadTimestamp,desc') => {
+  return apiClient.get(`${API_ADMIN_VIDEO_URL}`, {
+    params: { page, size, sort }
+  });
+};
+
+/**
+ * Admin updates the status of a specific video.
+ * @param {string|number} videoId - The ID of the video.
+ * @param {string} status - The new status (e.g., "AVAILABLE", "PENDING_PROCESSING", "UNAVAILABLE").
+ */
+const adminUpdateVideoStatus = (videoId, status) => {
+  return apiClient.patch(`${API_ADMIN_VIDEO_URL}/${videoId}/status`, null, { // Body is null, status is query param
+    params: { status }
+  });
+};
+
+
+/**
+ * Admin updates the metadata of any video.
+ * Note: Backend endpoint might be the same as general video update if permissions allow.
+ * Or could be a specific admin endpoint. Assuming PUT /api/admin/videos/{videoId} for this.
+ * @param {string|number} videoId - The ID of the video.
+ * @param {object} metadata - The metadata object.
+ */
+const adminUpdateVideoMetadata = (videoId, metadata) => {
+  return apiClient.put(`${API_ADMIN_VIDEO_URL}/${videoId}`, metadata);
+};
+
+/**
+ * Admin deletes any video.
+ * @param {string|number} videoId - The ID of the video to delete.
+ */
+const adminDeleteVideo = (videoId) => {
+  return apiClient.delete(`${API_ADMIN_VIDEO_URL}/${videoId}`);
+};
+
 /**
  * Uploads a video file along with its metadata.
  * @param {File} videoFile - The video file to upload.
@@ -77,6 +116,13 @@ const VideoService = {
   getDistinctGenres,
   searchVideosByTitle,
   uploadVideoWithMetadata,
+
+  
+  // Admin functions
+  adminGetAllVideos,
+  adminUpdateVideoStatus,
+  adminUpdateVideoMetadata,
+  adminDeleteVideo,
 };
 
 export default VideoService;

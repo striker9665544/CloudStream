@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;                // <<< ADD THIS IMPORT
 import org.springframework.http.ResponseEntity;           // <<< ADD THIS IMPORT
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -249,5 +250,13 @@ public class VideoService {
         if (!isAdmin && !userDetails.getId().equals(ownerId)) {
             throw new org.springframework.security.access.AccessDeniedException("User does not have permission to modify this resource.");
         }
+    }
+    
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasRole('ADMIN')") // Secure at service layer too for defense in depth
+    public Page<VideoResponse> getAllVideosForAdmin(Pageable pageable) {
+        // No status filter here, fetches all videos
+        Page<Video> videosPage = videoRepository.findAll(pageable);
+        return videosPage.map(video -> VideoResponse.fromEntity(video)); // Map to DTO
     }
 }

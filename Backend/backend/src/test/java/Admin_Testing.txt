@@ -1,0 +1,76 @@
+Prerequisites:
+Your Spring Boot backend application is running with the new AdminVideoController and updated VideoService.
+You have an ADMIN user and their JWT token (e.g., {{adminToken}}).
+You have some videos in your videos table with various statuses (e.g., "PENDING_PROCESSING", "AVAILABLE").
+A. Postman Setup:
+Use your existing {{baseURL}}.
+Use {{adminToken}}.
+Add requests to an "Admin - Video Management" folder within your Postman collection.
+B. Test Cases:
+1. List All Videos (Admin)
+Description: Verify admin can fetch all videos regardless of status, with pagination.
+Method: GET
+URL: {{baseURL}}/admin/videos?page=0&size=5&sort=title,asc
+Authorization: Bearer Token {{adminToken}}
+Expected Response:
+Status: 200 OK
+Body: Paginated list of VideoResponse objects. Should include videos with any status (e.g., "PENDING_PROCESSING", "AVAILABLE"). Verify pagination and sorting.
+2. List All Videos - Unauthenticated (Security Test)
+Method: GET
+URL: {{baseURL}}/admin/videos
+Authorization: No Auth
+Expected Response:
+Status: 401 Unauthorized
+3. List All Videos - Non-Admin User (Security Test)
+Method: GET
+URL: {{baseURL}}/admin/videos
+Authorization: Bearer Token {{userTokenLokesh}} (assuming Lokesh has ROLE_USER, not ADMIN for this test case)
+Expected Response:
+Status: 403 Forbidden
+4. Change Video Status (Admin)
+Description: Admin changes the status of a video (e.g., ID 1 from "PENDING_PROCESSING" to "AVAILABLE").
+Method: PATCH
+URL: {{baseURL}}/admin/videos/1/status?status=AVAILABLE (Replace 1 with an actual video ID)
+Authorization: Bearer Token {{adminToken}}
+Body: None (status is a query param)
+Expected Response:
+Status: 200 OK
+Body: VideoResponse for video 1, showing the updated status: "AVAILABLE" and processedTimestamp (if applicable).
+Database Check: Verify the status of video 1 is updated in the videos table.
+Follow-up Test: Try changing it to another valid status (e.g., "UNAVAILABLE").
+5. Attempt to Change Video Status - Non-Admin User (Security Test)
+Method: PATCH
+URL: {{baseURL}}/admin/videos/1/status?status=UNAVAILABLE
+Authorization: Bearer Token {{userTokenLokesh}}
+Expected Response:
+Status: 403 Forbidden
+6. Edit Any Video's Metadata (Admin)
+Description: Admin edits metadata for a video they didn't upload (e.g., video ID 2).
+Method: PUT
+URL: {{baseURL}}/admin/videos/2 (Replace 2 with an actual video ID)
+Authorization: Bearer Token {{adminToken}}
+Body (raw, JSON):
+json { "title": "Admin Updated Title for Video 2", "description": "Admin updated description.", "genre": "Updated Genre by Admin", "thumbnailUrl": "http://example.com/admin_thumb.jpg", "tags": ["admin_edit", "reviewed"] }
+Expected Response:
+Status: 200 OK
+Body: Updated VideoResponse for video 2.
+Database Check: Verify the metadata for video 2 is updated.
+7. Attempt to Edit Video Metadata - Non-Admin User (for a video they don't own - Security Test)
+* Assume UserA (tokenA) uploaded Video 1.
+* UserB (tokenB, non-admin) attempts to edit Video 1.
+* Method: PUT
+* URL: {{baseURL}}/admin/videos/1
+* Authorization: Bearer Token {{userTokenB}}
+* Body (raw, JSON): (Same as above)
+* Expected Response:
+* Status: 403 Forbidden (Because the endpoint /api/admin/videos/{videoId} is class-level protected for ADMIN only. The SpEL on the old PUT /api/videos/{videoId} would also deny this if UserB is not the owner).
+(If you moved DELETE to AdminVideoController and want admins to delete any video):
+8. Admin Deletes Any Video
+Description: Admin deletes a video (e.g., ID 3).
+Method: DELETE
+URL: {{baseURL}}/admin/videos/3
+Authorization: Bearer Token {{adminToken}}
+Expected Response:
+Status: 200 OK
+Body: {"message": "Video deleted successfully by admin."} (or similar)
+Verification: Video 3 should be removed from the database and its physical file (if FileStorageService.deleteFile is called from VideoService.deleteVideo).

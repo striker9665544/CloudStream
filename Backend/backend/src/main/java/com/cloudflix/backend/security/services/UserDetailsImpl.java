@@ -3,6 +3,7 @@ package com.cloudflix.backend.security.services;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.cloudflix.backend.entity.User;
+
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,6 +24,7 @@ public class UserDetailsImpl implements UserDetails {
     @JsonIgnore
     private String password;
     private Collection<? extends GrantedAuthority> authorities;
+    private boolean active;
 
     public UserDetailsImpl(Long id, String email, String firstName, String password,
                            Collection<? extends GrantedAuthority> authorities) {
@@ -45,6 +47,7 @@ public class UserDetailsImpl implements UserDetails {
                 user.getPassword(),
                 authorities);
     }
+   
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -94,6 +97,5 @@ public class UserDetailsImpl implements UserDetails {
         UserDetailsImpl user = (UserDetailsImpl) o;
         return Objects.equals(id, user.id);
     }
-
 
 }

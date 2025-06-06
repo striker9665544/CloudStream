@@ -44,6 +44,9 @@ public class User {
     @Size(max = 255)
     @Column(name = "password_hash")
     private String password;
+    
+    @Column(name = "is_active", columnDefinition = "BOOLEAN DEFAULT TRUE") // <<< NEW FIELD
+    private boolean active = true;
 
     private LocalDate dateOfBirth;
     
@@ -70,7 +73,9 @@ public class User {
         this.email = email;
         this.password = password;
         this.dateOfBirth = dateOfBirth;
+        this.active = true;
     }
+    
 
  // --- Getter and Setter Methods ---
 
@@ -141,5 +146,13 @@ public class User {
     public void setRoles(Set<Role> roles) {
     	this.roles = roles;
     }
+    
+ // Getter and Setter for the new 'active' field
+    public boolean isActive() { return active; }                        
+    public void setActive(boolean active) { this.active = active; }    
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 	
 }

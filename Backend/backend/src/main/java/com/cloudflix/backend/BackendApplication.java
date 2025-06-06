@@ -30,6 +30,10 @@ public class BackendApplication {
                 roleRepository.save(new Role(ERole.ROLE_ADMIN));
                 System.out.println("ROLE_ADMIN initialized.");
             }
+            if (roleRepository.findByName(ERole.ROLE_UPLOADER).isEmpty()) {
+                roleRepository.save(new Role(ERole.ROLE_UPLOADER));
+                System.out.println("ROLE_UPLOADER initialized.");
+            }
         };
     }
 }
