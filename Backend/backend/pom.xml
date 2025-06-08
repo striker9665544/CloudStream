@@ -28,7 +28,28 @@
 	</scm>
 	<properties>
 		<java.version>17</java.version>
+		<aws.java.sdk.version>2.25.42</aws.java.sdk.version>
+		<azure.sdk.bom.version>1.2.23</azure.sdk.bom.version>
 	</properties>
+	<dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>${aws.java.sdk.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.azure</groupId>
+                <artifactId>azure-sdk-bom</artifactId>
+                <version>${azure.sdk.bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+         </dependencies>
+    </dependencyManagement>
+    
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -89,6 +110,30 @@
     		<artifactId>jackson-datatype-jsr310</artifactId>
     		<!-- Version is usually managed by Spring Boot BOM -->
 		</dependency>
+		<dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <!-- Version managed by BOM -->
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-storage-blob</artifactId>
+            <!-- Version managed by Azure SDK BOM -->
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+        	<groupId>com.azure</groupId>
+        	<artifactId>azure-identity</artifactId>
+    	</dependency>
 	</dependencies>
 
 	<build>

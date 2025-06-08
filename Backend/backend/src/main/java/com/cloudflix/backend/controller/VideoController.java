@@ -1,30 +1,31 @@
-//src/main/java/com/cloudflix/backend/controller/VideoController.java
+// src/main/java/com/cloudflix/backend/controller/VideoController.java
 package com.cloudflix.backend.controller;
 
 import com.cloudflix.backend.dto.request.VideoMetadataRequest;
 import com.cloudflix.backend.dto.response.MessageResponse;
 import com.cloudflix.backend.dto.response.VideoResponse;
-import com.cloudflix.backend.entity.Video; // Make sure this is imported
 import com.cloudflix.backend.exception.ResourceNotFoundException;
+// import com.cloudflix.backend.entity.Video; // No longer directly used here for streaming logic
 import com.cloudflix.backend.service.VideoService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
+import org.springframework.core.io.Resource;         // Keep for other potential uses if any
+import org.springframework.core.io.support.ResourceRegion; // <<< ADD THIS IMPORT
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;         // <<< ADD THIS IMPORT
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;        // <<< ADD THIS IMPORT
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
+// import org.springframework.http.MediaType; // No longer directly used here for streaming
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException; // Import for Files.probeContentType
-import java.net.MalformedURLException;
-import java.nio.file.Files; // Import for Files.probeContentType
-import java.nio.file.Path;
-import java.nio.file.Paths;
+// import java.io.IOException; // No longer directly used here
+// import java.net.MalformedURLException; // No longer directly used here
+// import java.nio.file.Files; // No longer directly used here
+// import java.nio.file.Path; // No longer directly used here
+// import java.nio.file.Paths; // No longer directly used here
 import java.util.List;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -35,25 +36,29 @@ public class VideoController {
     @Autowired
     private VideoService videoService;
 
-    // This should resolve to the root of your 'uploads/videos' directory, e.g.,
-    private final Path videoStorageLocation = Paths.get("uploads/videos").toAbsolutePath().normalize();
+    // REMOVE THIS - Path logic is now in LocalStorageServiceImpl via CloudStorageService
+    // private final Path videoStorageLocation = Paths.get("uploads/videos").toAbsolutePath().normalize();
 
-    @PostMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('UPLOADER')")
+    @PostMapping // This endpoint is for creating metadata *after* a file upload
+    @PreAuthorize("hasRole('ADMIN') or hasRole('UPLOADER')") // Assuming this endpoint is still used by FileUploadController indirectly
     public ResponseEntity<VideoResponse> createVideoMetadata(@Valid @RequestBody VideoMetadataRequest videoRequest) {
-        // Generate a unique filename, DO NOT include the "uploads/videos/" prefix here.
-        // The prefix is handled by videoStorageLocation when streaming.
-        String uniqueFileName = System.currentTimeMillis() + "_" +
-                videoRequest.getTitle()
-                        .replaceAll("\\s+", "_") // Replace spaces with underscores
-                        .replaceAll("[^a-zA-Z0-9._-]", "") + // Sanitize for typical filename characters
-                ".mp4"; // Assuming mp4, adjust if needed
+        // Note: The actual file upload now happens via FileUploadController.
+        // This createVideoMetadata in VideoController might become an internal helper
+        // or only callable by FileUploadController, or removed if FileUploadController calls
+        // videoService.createVideoMetadata directly.
+        // For now, let's assume it might still be used for some metadata-only creation scenario
+        // or the FileUploadController calls VideoService.createVideoMetadata.
+        
+        // If this endpoint is for metadata-only and storageObjectKey is set manually:
+        String uniqueFileName = videoRequest.getTitle() != null ? // A simplified placeholder for storageObjectKey if not set
+                System.currentTimeMillis() + "_" +
+                videoRequest.getTitle().replaceAll("\\s+", "_").replaceAll("[^a-zA-Z0-9._-]", "") + ".mp4"
+                : "default_video_key_" + System.currentTimeMillis() + ".mp4";
 
-        // The videoService.createVideoMetadata will use this uniqueFileName
-        // as the storageObjectKey when creating the Video entity.
-        VideoResponse createdVideo = videoService.createVideoMetadata(videoRequest, uniqueFileName);
+        VideoResponse createdVideo = videoService.createVideoMetadata(videoRequest, uniqueFileName /* or get this from request if it contains storageKey */);
         return new ResponseEntity<>(createdVideo, HttpStatus.CREATED);
     }
+
 
     @PutMapping("/{videoId}")
     @PreAuthorize("hasRole('ADMIN') or @videoService.getVideoEntityById(#videoId).uploader.id == principal.id")
@@ -63,8 +68,12 @@ public class VideoController {
         return ResponseEntity.ok(updatedVideo);
     }
 
+    // Note: The @PatchMapping and @PreAuthorize here were for VideoController.
+    // If these are meant for Admin only, they should be in AdminVideoController.
+    // For now, keeping them here if general users (owners) could potentially change status via other means.
+    // However, typical status changes are admin tasks.
     @PatchMapping("/{videoId}/status")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')") // More likely an admin task
     public ResponseEntity<VideoResponse> updateVideoStatus(@PathVariable Long videoId, @RequestParam String status) {
         VideoResponse updatedVideo = videoService.updateVideoStatus(videoId, status);
         return ResponseEntity.ok(updatedVideo);
@@ -72,7 +81,8 @@ public class VideoController {
 
     @GetMapping
     public ResponseEntity<Page<VideoResponse>> getAllAvailableVideos(
-            @PageableDefault(size = 20, sort = "uploadTimestamp,desc") Pageable pageable) { // Added ,desc to sort
+            // Corrected @PageableDefault
+            @PageableDefault(size = 20, sort = "uploadTimestamp", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<VideoResponse> videos = videoService.getAllAvailableVideos(pageable);
         return ResponseEntity.ok(videos);
     }
@@ -80,7 +90,7 @@ public class VideoController {
     @GetMapping("/{videoId}")
     public ResponseEntity<VideoResponse> getAvailableVideoById(@PathVariable Long videoId) {
         VideoResponse video = videoService.getAvailableVideoById(videoId);
-        videoService.incrementViewCount(videoId);
+        videoService.incrementViewCount(videoId); // Increment view count
         return ResponseEntity.ok(video);
     }
 
@@ -112,9 +122,9 @@ public class VideoController {
     }
 
     @DeleteMapping("/{videoId}")
-    @PreAuthorize("hasRole('ADMIN') or @videoService.getVideoEntityById(#videoId).uploader.id == principal.id")
+    //@PreAuthorize("hasRole('ADMIN') or @videoService.getVideoEntityById(#videoId).uploader.id == principal.id")
     public ResponseEntity<MessageResponse> deleteVideo(@PathVariable Long videoId) {
-        videoService.deleteVideo(videoId);
+        videoService.deleteVideo(videoId); // This now calls cloudStorageService.delete internally
         return ResponseEntity.ok(new MessageResponse("Video deleted successfully."));
     }
 
@@ -124,57 +134,44 @@ public class VideoController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/stream/{videoId}")
-    public ResponseEntity<Resource> streamVideo(@PathVariable Long videoId) {
+    // === UPDATED STREAMING ENDPOINT ===
+    /*@GetMapping("/stream/{videoId}")
+    public ResponseEntity<ResourceRegion> streamVideo(
+            @PathVariable Long videoId,
+            @RequestHeader HttpHeaders headers) { // Inject HttpHeaders to get the Range header
+        return videoService.streamVideoFileWithRange(videoId, headers);
+    }*/
+    
+    // Endpoint to get the streamable URL (could be pre-signed S3 or local path)
+    @GetMapping("/{videoId}/stream-url")
+    // Security: If videos are public, this can be public.
+    // If only authenticated users can play, add @PreAuthorize("isAuthenticated()")
+    // For now, aligns with GET /api/videos/** being permitAll
+    public ResponseEntity<Object> getStreamUrl(@PathVariable Long videoId) {
         try {
-            System.out.println("[STREAM DEBUG] videoStorageLocation (absolute): " + this.videoStorageLocation.toString());
-
-            Video video = videoService.getVideoEntityById(videoId);
-            if (video == null || video.getStorageObjectKey() == null || video.getStorageObjectKey().isEmpty()) {
-                System.err.println("[STREAM DEBUG] Video or storage key not found/empty for ID: " + videoId);
-                return ResponseEntity.notFound().build();
-            }
-
-            String fileNameFromDb = video.getStorageObjectKey(); // This should now be just "Battlecruiser.mp4" or similar
-            System.out.println("[STREAM DEBUG] storageKeyFromDb (should be filename only): " + fileNameFromDb);
-
-            // Construct the full path to the video file
-            Path videoFile = this.videoStorageLocation.resolve(fileNameFromDb).normalize();
-            System.out.println("[STREAM DEBUG] Attempting to stream video from (resolved path): " + videoFile.toString());
-
-            Resource resource = new UrlResource(videoFile.toUri());
-
-            if (resource.exists() && resource.isReadable()) {
-                String contentType = "video/mp4"; // Default
-                try {
-                    String detectedContentType = Files.probeContentType(videoFile);
-                    if (detectedContentType != null) {
-                        contentType = detectedContentType;
-                    }
-                } catch (IOException e) {
-                    System.err.println("[STREAM DEBUG] Could not determine content type for " + fileNameFromDb + ". Defaulting. Error: " + e.getMessage());
-                }
-                System.out.println("[STREAM DEBUG] Serving video with content type: " + contentType);
-
-                return ResponseEntity.ok()
-                        .contentType(MediaType.parseMediaType(contentType))
-                        // .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"") // Optional
-                        .body(resource);
-            } else {
-                System.err.println("[STREAM DEBUG] Could not read video file (exists: " + resource.exists() + ", readable: " + resource.isReadable() + "): " + videoFile.toString());
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
-        } catch (MalformedURLException ex) {
-            System.err.println("[STREAM DEBUG] Malformed URL for video file (videoId: " + videoId + "): " + ex.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null); // Or a more specific error
-        } catch (ResourceNotFoundException ex) { // If videoService.getVideoEntityById throws this
-             System.err.println("[STREAM DEBUG] Video metadata not found for ID " + videoId + ": " + ex.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            String streamUrl = videoService.getPlayableVideoUrl(videoId);
+            // Return as a simple JSON object
+            return ResponseEntity.ok(java.util.Collections.singletonMap("url", streamUrl));
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse(e.getMessage()));
+        } catch (Exception e) {
+            // Log error
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageResponse("Error generating stream URL."));
         }
-         catch (Exception e) { // Catch-all for other unexpected errors
-            System.err.println("[STREAM DEBUG] Generic error streaming video ID " + videoId + ": " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    }
+
+    // Your existing @GetMapping("/stream/{videoId}") that returns ResponseEntity<ResourceRegion>
+    // will now PRIMARILY serve local files when the "local" profile is active,
+    // or if you decide to stream S3 through your backend (less ideal).
+    // For S3, the frontend will use the URL from "/stream-url".
+    @GetMapping("/stream/{videoId}")
+    public ResponseEntity<ResourceRegion> streamVideo(
+            @PathVariable Long videoId,
+            @RequestHeader HttpHeaders headers) {
+        // This will call videoService.streamVideoFileWithRange, which uses
+        // cloudStorageService.loadAsResource(). For S3, loadAsResource might
+        // be less efficient than using a presigned URL directly.
+        // This endpoint becomes the fallback or local streaming handler.
+        return videoService.streamVideoFileWithRange(videoId, headers);
     }
 }

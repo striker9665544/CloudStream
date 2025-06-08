@@ -10,6 +10,9 @@
 		<item key="incremental" value="false"/>
 		<item key="isRegEx" value="false"/>
 		<list key="findhistory">
+			<item value="blobClient "/>
+			<item value="DeleteMapping"/>
+			<item value="Qualifier"/>
 			<item value="FileUploadController"/>
 			<item value="matada"/>
 			<item value="placeholderStorageKey"/>

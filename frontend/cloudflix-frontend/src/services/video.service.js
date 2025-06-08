@@ -12,6 +12,10 @@ const getAllAvailableVideos = (page = 0, size = 20, sort = 'uploadTimestamp,desc
   });
 };
 
+const getSecureStreamUrl = (videoId) => {
+  return apiClient.get(`${API_VIDEO_URL}/${videoId}/stream-url`);
+};
+
 // Fetch a specific video by its ID
 const getVideoById = (videoId) => {
   return apiClient.get(`${API_VIDEO_URL}/${videoId}`);
@@ -116,6 +120,7 @@ const VideoService = {
   getDistinctGenres,
   searchVideosByTitle,
   uploadVideoWithMetadata,
+  getSecureStreamUrl,
 
   
   // Admin functions

@@ -150,6 +150,26 @@ const PlayerPage = () => {
         setVideoData(metaResponse.data);
         setVideoUrl(`${apiClient.defaults.baseURL}/videos/stream/${videoId}`);
 
+                // === FETCH AND SET PRE-SIGNED S3 URL ===
+        if (metaResponse.data) { // Only if metadata was fetched successfully
+            try {
+                console.log("[PlayerPage] Fetching secure stream URL for videoId:", videoId);
+                const streamUrlResponse = await VideoService.getSecureStreamUrl(videoId);
+                if (streamUrlResponse.data && streamUrlResponse.data.url) {
+                    console.log("[PlayerPage] Received S3 pre-signed URL:", streamUrlResponse.data.url);
+                    setVideoUrl(streamUrlResponse.data.url); // Use the S3 URL
+                } else {
+                    console.error("[PlayerPage] Stream URL response did not contain a URL:", streamUrlResponse.data);
+                    setError("Could not retrieve video stream URL.");
+                }
+            } catch (streamUrlError) {
+                console.error("[PlayerPage] Failed to fetch secure stream URL:", streamUrlError);
+                setError("Failed to get video stream location.");
+                // If fetching stream URL fails, videoUrl remains empty, player won't load
+            }
+        }
+        // =======================================
+        
         await Promise.allSettled([
           (async () => {
             try {

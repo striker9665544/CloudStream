@@ -2,6 +2,7 @@
 package com.cloudflix.backend.controller;
 
 import com.cloudflix.backend.dto.request.VideoMetadataRequest;
+import com.cloudflix.backend.dto.response.MessageResponse;
 import com.cloudflix.backend.dto.response.VideoResponse;
 import com.cloudflix.backend.service.VideoService;
 import jakarta.validation.Valid;
@@ -64,4 +65,18 @@ public class AdminVideoController {
         return ResponseEntity.ok(new MessageResponse("Video deleted successfully by admin."));
     }
     */
+    
+    // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+    //      ENSURE THIS DELETE MAPPING IS PRESENT AND CORRECT
+    // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+    @DeleteMapping("/{videoId}")
+    public ResponseEntity<MessageResponse> deleteVideo(@PathVariable Long videoId) {
+        // The class-level @PreAuthorize("hasRole('ADMIN')") already secures this.
+        // The VideoService.deleteVideo method should handle deleting from storage (S3/local) and DB.
+        videoService.deleteVideo(videoId);
+        return ResponseEntity.ok(new MessageResponse("Video (ID: " + videoId + ") deleted successfully by admin."));
+    }
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    //      END OF DELETE MAPPING
+    // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 }

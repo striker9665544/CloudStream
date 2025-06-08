@@ -1,0 +1,93 @@
+A. Postman Setup:
+Use your existing {{baseURL}} (http://localhost:8080/api).
+Use your {{adminToken}} or {{uploaderToken}}.
+These requests can go into your "CloudFlix - Video Service" or "Admin - Video Management" Postman collection.
+B. Test Cases:
+
+
+1. Upload a Video File to S3
+Description: Verify that a video file is uploaded to your S3 bucket and its metadata is stored in the database with the S3 object key.
+Method: POST
+URL: {{baseURL}}/upload/video
+Authorization: Bearer Token {{adminToken}} (or {{uploaderToken}})
+Body (form-data):
+Key 1:
+KEY: videoFile
+Type: File
+VALUE: Select a sample .mp4 video file from your computer (e.g., mytestvideo.mp4).
+Key 2:
+KEY: metadata
+Type: Text (or File, pointing to a metadata.json as we discussed before if plain text part fails)
+VALUE (as JSON string if Text type):
+{
+    "title": "S3 Upload Test Video",
+    "description": "Testing S3 upload functionality.",
+    "genre": "Test",
+    "durationSeconds": 180,
+    "thumbnailUrl": "http://example.com/s3_thumb.jpg",
+    "tags": ["s3", "cloud", "testupload"]
+}
+Use code with caution.
+Json
+Content-Type for metadata part (if Postman allows/needs it, or by using a .json file for this part): application/json
+Expected Response:
+Status: 201 Created
+Body: VideoResponse DTO. Note the id (e.g., s3VideoId) and the storageObjectKey. The storageObjectKey should look like videos/timestamp_uuid_S3_Upload_Test_Video.mp4.
+Verification:
+AWS S3 Console: Check your S3 bucket. You should see a new object under the videos/ prefix with the filename matching the storageObjectKey from the response.
+Database: A new row in your videos table with the metadata and the S3 object key.
+Backend Console: Look for logs from S3StorageServiceImpl like "Successfully uploaded ... to S3 bucket ... with key ...".
+
+
+
+2. Get Stream URL (Pre-signed S3 URL)
+Description: Verify that the backend generates a valid pre-signed S3 URL for the uploaded video.
+Method: GET
+URL: {{baseURL}}/videos/{s3VideoId}/stream-url (Replace {s3VideoId} with the actual ID from Step 1).
+Authorization: Bearer Token {{adminToken}} (or user token if your endpoint allows it; currently it's public in VideoController if /api/videos/** GET is permitAll()).
+Expected Response:
+Status: 200 OK
+Body: JSON object, e.g.:
+{
+    "url": "https://your-s3-bucket-name.s3.your-s3-region.amazonaws.com/videos/your_object_key.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=..." 
+}
+Use code with caution.
+Json
+The URL will be long and contain query parameters for authentication and expiration.
+
+
+
+3. Test the Pre-signed S3 URL Directly
+Action: Copy the entire URL value from the response in Step 2.
+Paste it into a new browser tab or use a new Postman GET request (with No Auth).
+Expected: The video should start playing/streaming directly from S3. This confirms the pre-signed URL is valid and has the correct permissions.
+
+
+
+4. Test Frontend PlayerPage with S3 Stream URL (Manual Test for Now)
+If you have modified PlayerPage.jsx to fetch and use the URL from /stream-url:
+Navigate to http://localhost:5173/player/{s3VideoId}.
+Expected: The player should load and stream the video from S3 using the pre-signed URL.
+Browser Network Tab: You should see a request made by ReactPlayer directly to the s3.amazonaws.com URL, not to your backend's /api/videos/stream/... endpoint for the S3 video. This request to S3 should get 200 OK or 206 Partial Content.
+
+
+
+5. Delete the Video (from S3 and DB)
+Description: Verify that deleting the video metadata also deletes the object from S3.
+Method: DELETE
+URL: {{baseURL}}/admin/videos/{s3VideoId} (Using the admin endpoint)
+Authorization: Bearer Token {{adminToken}}
+Expected Response:
+Status: 200 OK
+Body: {"message": "Video deleted successfully."} (or similar).
+Verification:
+AWS S3 Console: The object corresponding to {s3VideoId} should no longer exist in your bucket.
+
+
+Database: The row for {s3VideoId} should be deleted from the videos table.
+Backend Console: Look for logs from S3StorageServiceImpl like "Successfully deleted ... from S3 bucket ...".
+Troubleshooting S3 Issues:
+Credentials Errors: If you get AWS SDK errors related to credentials (e.g., "Unable to load AWS credentials"), double-check your local credential setup.
+Permissions Errors (403 Forbidden from S3): The IAM user/role used by the SDK needs appropriate S3 permissions (s3:PutObject, s3:GetObject, s3:DeleteObject) on the specified bucket and object paths.
+Bucket/Region Mismatch: Ensure aws.s3.bucket-name and aws.s3.region in your properties match your actual S3 setup.
+Clock Skew with Pre-signed URLs: If your server's clock is significantly out of sync with AWS's clock, pre-signed URLs might fail. This is rare with modern systems.
